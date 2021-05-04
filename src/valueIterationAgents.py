@@ -13,6 +13,7 @@
 
 
 import mdp, util
+import operator #Necessário para pegar o maior valor no dicionário
 
 from learningAgents import ValueEstimationAgent
 
@@ -45,6 +46,22 @@ class ValueIterationAgent(ValueEstimationAgent):
 
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        
+        for _ in range(self.iterations):
+            Vt = self.values.copy()
+            for state in self.mdp.getStates():
+                #print('Estado: ', state)
+                maiorValor = float('-inf')                
+                melhorAcao = self.computeActionFromValues(state)
+                #print('Melhor acao: ', melhorAcao)
+                if melhorAcao != None:
+                    melhorValor = self.computeQValueFromValues(state, melhorAcao)
+                    if melhorValor > maiorValor:
+                        #print('Melhor valor: ', melhorValor)
+                        maiorValor = melhorValor
+                        Vt[state] = melhorValor
+
+            self.values = Vt
 
 
     def getValue(self, state):
@@ -60,7 +77,14 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        valorDaAcao = 0
+        for next_state, prob in self.mdp.getTransitionStatesAndProbs(state, action):            
+            #if self.mdp.isTerminal(next_state):
+                #continue
+            reward = self.mdp.getReward(state, action, next_state)
+            valorDaAcao += (prob * (reward + self.discount * self.values[next_state]))
+        
+        return valorDaAcao
 
     def computeActionFromValues(self, state):
         """
@@ -72,7 +96,20 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        best_action = {} #Dicionario (acao, valor)
+
+        if self.mdp.isTerminal(state):
+            return None
+
+        for action in self.mdp.getPossibleActions(state):
+            valorDaAcao = self.computeQValueFromValues(state, action)
+            best_action[action] = valorDaAcao #Vai adicionado os valores
+
+
+        melhorAcao = max(best_action.items(), key=operator.itemgetter(1))[0]
+        return melhorAcao
+
+        #util.raiseNotDefined()
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
